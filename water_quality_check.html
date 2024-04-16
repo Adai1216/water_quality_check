@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Анализ качества воды</title>
+    <style>
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #00B4D8;
+            background: url('water-background.png') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            width: 80%;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+
+        input, button {
+            width: 300px;
+            height: 40px;
+            margin: 10px auto;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            background-color: #028090;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        h1 {
+            color: white;
+        }
+
+        #output {
+            color: black;
+            background: white;
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+            overflow: auto;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "@google/generative-ai": "https://esm.run/@google/generative-ai"
+            }
+        }
+    </script>
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        const API_KEY = "AIzaSyBYcHw720MY-4VZqz9vy05WABjbTR_U0cE";
+
+        const genAI = new GoogleGenerativeAI(API_KEY);
+
+        async function analyzeWaterQuality() {
+            const pH = document.getElementById('pH').value;
+            const pollutants = document.getElementById('pollutants').value;
+            const temperature = document.getElementById('temperature').value;
+
+            if ((pH < 6.5 || pH > 8.5) || pollutants > 3 ) {
+                showAlert();
+            }
+
+            
+            const prompt = `Напиши коротко о каждом пункте и общее заключение, после чего напиши решение проблемы. Данные для анализа качества воды: pH=${pH}, уровень загрязнения от 0 до 4=${pollutants}, температура воды в цельсий=${temperature}`;
+
+            try {
+                const model = genAI.getGenerativeModel({ model: "gemini-pro"});
+                const result = await model.generateContent(prompt);
+                const aiResponse = await result.response;
+                const analysis = await aiResponse.text();
+                document.getElementById('output').innerText = analysis;
+            } catch (error) {
+                console.error('Failed to analyze water quality:', error);
+                document.getElementById('output').innerText = "Error: " + error.message;
+            }
+        }
+        document.getElementById('generateButton').addEventListener('click', analyzeWaterQuality);
+
+        function showAlert() {
+            const sound = document.getElementById('alertSound');
+            sound.play(); 
+            const alertPopup = document.getElementById('alertPopup');
+            alertPopup.style.display = 'block'; 
+            setTimeout(function() {
+                alertPopup.style.display = 'none';
+            }, 5000);
+}
+
+    </script>
+
+    <style>
+        .alert-popup {
+            background-color: red;
+            color: white;
+            padding: 20px;
+            border: 1px solid black;
+            border-radius: 5px;
+            position: fixed;
+            top: 10%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: none; 
+            text-align: center;
+            width: 300px;
+        }
+    </style>
+  
+</head>
+<body>
+    <div class="container">
+    <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
+    <div id="alertPopup" class="alert-popup">
+        Аномалия!
+      </div>
+      
+    <h1>Данные для анализа качества воды</h1>
+    <input id="pH" type="text" placeholder="Значение pH от 0 до 14">
+    <input id="pollutants" type="text" placeholder="Уровень загрязнения от 0 до 4">
+    <input id="temperature" type="text" placeholder="Температура воды в цельсий">
+    <button id="generateButton">Анализировать</button>
+    <div id="output"></div></div>
+</body>
+</html>
